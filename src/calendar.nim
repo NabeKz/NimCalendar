@@ -5,38 +5,34 @@ type
   CalenderDate* = ref object of RootObj
     dt: DateTime
   ThisMonthCalendarDate = ref object of CalenderDate
-  OtherMonthCalendarDate = ref object of CalenderDate
+  LastMonthCalendarDate = ref object of CalenderDate
+  NextMonthCalendarDate = ref object of CalenderDate
 
-proc newThisMonthCalendarDate*(dt: DateTime): ThisMonthCalendarDate =
-  ThisMonthCalendarDate(dt: dt)
-
-proc newOtherMonthCalendarDate*(dt: DateTime): OtherMonthCalendarDate =
-  OtherMonthCalendarDate(dt: dt)
 
 method `$`*(c: CalenderDate): string{.base.} =
   c.dt.format("yyyy-MM-dd")
 
 method day*(c: CalenderDate): string{.base.} =
   let day = $c.dt.monthday
-  " " & day.align(2, '0')
+  day.align(2, '0')
 
-proc thisMonthDays*(dt: BaseDate): seq[CalenderDate] =
-  let lastDay = getDaysInMonth(dt.month, dt.year)
+proc thisMonthDates*(baseDate: BaseDate): seq[CalenderDate] =
+  let lastDay = getDaysInMonth(baseDate.month, baseDate.year)
   for i in 0..<ord(lastDay):
-    let dt = dt + i.days
-    result.add(newThisMonthCalendarDate(dt))
+    let dt = baseDate + i.days
+    result.add(ThisMonthCalendarDate(dt: dt))
   
-proc lastMonthDays*(dt: BaseDate): seq[CalenderDate] =
-  for i in 1..ord(dt.firstDayIndex):
-    let dt = dt - i.days
-    result.add(newOtherMonthCalendarDate(dt))
+proc lastMonthDates*(baseDate: BaseDate): seq[CalenderDate] =
+  for i in 1..ord(baseDate.firstDayIndex):
+    let dt = baseDate - i.days
+    result.add(LastMonthCalendarDate(dt: dt))
   result.reverse()
 
-proc nextMonthDays*(dt: BaseDate): seq[CalenderDate] =
-  let lastDate = dt.lastDate
-  for i in 1..6 - ord(dt.lastDayIndex):
+proc nextMonthDates*(baseDate: BaseDate): seq[CalenderDate] =
+  let lastDate = baseDate.lastDate
+  for i in 1..6 - ord(baseDate.lastDayIndex):
     let dt = lastDate + i.days
-    result.add(newOtherMonthCalendarDate(dt))
+    result.add(NextMonthCalendarDate(dt: dt))
 
 
 proc chunk[T](ary: openArray[T], n: Natural): seq[seq[T]] =
@@ -56,24 +52,15 @@ proc chunk[T](ary: openArray[T], n: Natural): seq[seq[T]] =
 
 when isMainModule:
   let 
-    header = @["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    header = @["月", "火", "水", "木", "金", "土", "日"]
     baseDate = newBaseDate(2019, 12)
-    lastMonthDay = lastMonthDays(baseDate)
-    thisMonthDay = thisMonthDays(baseDate)
-    nextMonthDay = nextMonthDays(baseDate)
-    calendar = concat(lastMonthDay, thisMonthDay, nextMonthDay)
+    lastMonth = lastMonthDates(baseDate)
+    thisMonth = thisMonthDates(baseDate)
+    nextMonth = nextMonthDates(baseDate)
+    calendar = concat(lastMonth, thisMonth, nextMonth)
 
   echo header
-  for i in chunk(calendar, 7):
-    let m = i.mapIt(it.day)
+  for c in chunk(calendar, 7):
+    let m = c.mapIt(it.day)
+    # let m = i.mapIt(if (it of ThisMonthCalendarDate): it.day: else: "--")
     echo m
-  
-
-# ぎっちり詰めるのでための計算をします
-# 1週間は日~土の7日を繰り返しているので、月のはじめとおわりの曜日がわかれば
-# つめる分の曜日がわかります。
-# 日曜を0, 土曜を6すると
-# 2019年12月は日曜(0)はじまり, 火曜(1)おわりです。
-# なので、
-# はじめ週は曜日の個数 - 6 = 0、でつめなくてOK, 
-# おわり週は曜日の個数 - 1 = 5、つめる必要があります。
