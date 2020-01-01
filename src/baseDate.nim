@@ -1,23 +1,32 @@
 import times, strutils
 
 type
-  BaseDate = DateTime
+  BaseDate = ref object
+    dt: DateTime
 
 proc newBaseDate*(year: Natural, month: range[1..12]): BaseDate =
   let
     d = [$year, $month, "1"].join("-")
-    baseDate = parse(d, "yyyy-M-d")
-  baseDate
+    dt = parse(d, "yyyy-M-d")
+  BaseDate(dt: dt)
 
-proc firstDayIndex(baseDate: BaseDate): WeekDay =
-  getDayOfWeek(1, baseDate.month, baseDate.year)
+method month(baseDate: BaseDate): Month{.base.} =
+  baseDate.dt.month
 
-proc lastDate(baseDate: BaseDate): BaseDate =
+method year(baseDate: BaseDate): int{.base.} =
+  baseDate.dt.year
+  
+method lastDate(baseDate: BaseDate): DateTime{.base.} =
   let
     lastDay = getDaysInMonth(baseDate.month, baseDate.year)
   initDateTime(lastDay, baseDate.month, baseDate.year, 0, 0, 0)
+  
 
-proc lastDayIndex(baseDate: BaseDate): WeekDay =
+method firstDayIndex(baseDate: BaseDate): WeekDay{.base.} =
+  getDayOfWeek(1, baseDate.month, baseDate.year)
+
+
+method lastDayIndex(baseDate: BaseDate): WeekDay{.base.} =
   let
     dt = baseDate.lastDate
   getDayOfWeek(dt.monthday, dt.month, dt.year)

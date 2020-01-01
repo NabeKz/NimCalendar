@@ -1,4 +1,4 @@
-import algorithm, sequtils, sugar
+import algorithm, sequtils
 include baseDate
 
 type
@@ -13,18 +13,17 @@ method `$`*(c: CalenderDate): string{.base.} =
   c.dt.format("yyyy-MM-dd")
 
 method day*(c: CalenderDate): string{.base.} =
-  let day = $c.dt.monthday
-  day.align(2, '0')
+  intToStr(c.dt.monthday, 2)
 
 proc thisMonthDates*(baseDate: BaseDate): seq[CalenderDate] =
-  let lastDay = getDaysInMonth(baseDate.month, baseDate.year)
-  for i in 0..<ord(lastDay):
-    let dt = baseDate + i.days
+  let lastDay = baseDate.lastDate.monthday
+  for i in 0..<lastDay:
+    let dt = baseDate.dt + i.days
     result.add(ThisMonthCalendarDate(dt: dt))
   
 proc lastMonthDates*(baseDate: BaseDate): seq[CalenderDate] =
   for i in 1..ord(baseDate.firstDayIndex):
-    let dt = baseDate - i.days
+    let dt = baseDate.dt - i.days
     result.add(LastMonthCalendarDate(dt: dt))
   result.reverse()
 
